@@ -69,6 +69,7 @@ open class Easyyomi(private val suffix: String = "") : ConfigurableSource, Unmet
         val series: SeriesDto = Json.decodeFromString(body)
         return SManga.create().apply {
             title = series.name
+            url = series.name
         }
     }
 
@@ -81,13 +82,13 @@ open class Easyyomi(private val suffix: String = "") : ConfigurableSource, Unmet
         return chapters.map { chapter ->
             SChapter.create().apply {
                 name = chapter.name
-                url = chapter.seriesName
+                url = "${chapter.seriesName}/${chapter.name}"
             }
         }
     }
 
     override fun pageListRequest(chapter: SChapter): Request =
-        GET("$baseUrl/api/pages/${chapter.url}/${chapter.name}", headers)
+        GET("$baseUrl/api/pages/${chapter.url}", headers)
 
     override fun pageListParse(response: Response): List<Page> {
         val body = response.body.string()
@@ -96,7 +97,7 @@ open class Easyyomi(private val suffix: String = "") : ConfigurableSource, Unmet
         return pages.pages.mapIndexed { index, it ->
             Page(
                 index = index,
-                imageUrl = "$baseUrl/api/${pages.seriesName}/${pages.chapterName}/${URLEncoder.encode(it, StandardCharsets.UTF_8.toString())}",
+                imageUrl = "$baseUrl/api/page/${pages.seriesName}/${pages.chapterName}/${URLEncoder.encode(it, StandardCharsets.UTF_8.toString())}",
             )
         }
     }
@@ -104,7 +105,7 @@ open class Easyyomi(private val suffix: String = "") : ConfigurableSource, Unmet
     private fun processSeriesPage(response: Response): MangasPage {
         val body = response.body.string()
         val series: List<SeriesDto> = Json.decodeFromString(body)
-        return MangasPage(series.map { SManga.create().apply { title = it.name } }, false)
+        return MangasPage(series.map { SManga.create().apply { title = it.name; url = it.name } }, false)
     }
 
     override fun imageUrlParse(response: Response): String = throw Exception("Not Used")
